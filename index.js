@@ -6,6 +6,8 @@ let path = require('path')
 let Hapi = require('hapi')
 let asyncHandlerPlugin = require('hapi-async-handler')
 let mime = require('mime-types')
+let archiver = require('archiver')
+const constants = require('constants');
 let dirName = "files/"
 
 async function main() {
@@ -55,6 +57,29 @@ async function main() {
        async: deleteHandler
     }})
 
+    //get directory
+    server.route({
+    method: 'GET',
+    path: '/',
+    handler: {
+        async: readDirHandler
+    }})
+
+    //put directory
+    server.route({
+    method: 'PUT',
+    path: '/',
+    handler: {
+        async: writeHandler
+    }})
+
+    //POST directory
+    server.route({
+    method: 'POST',
+    path: '/',
+    handler: {
+        async: updateDirHandler
+    }})
 }
 
 function setHeaders(response, filePath, data) {
@@ -73,13 +98,36 @@ function getLocalFilePathFromRequest(request) {
 
 async function readHandler(request, reply) {
     const filePath = getLocalFilePathFromRequest(request)
-    console.log(`Reading ${filePath}`)
+    console.log(`Reading file ${filePath}`)
     let stat = await fs.stat(filePath)
     let data = undefined;
     if (!stat.isDirectory()) {
       data = await fs.readFile (filePath)
     } else {
+      reply().code(constants.HTTP_CODE)
+    }
+    //reply(fs.createReadStream(filePath))
+    reply(data)
+}
+
+async function readDirHandler(request, reply) {
+    const filePath = getLocalFilePathFromRequest(request)
+    console.log(`Reading directory ${filePath}`)
+    let stat = await fs.stat(filePath)
+    let data = undefined;
+    if (stat.isDirectory()) {
       data = await fs.readdir (filePath)
+    } else {
+      reply().code(constants.HTTP_CODE)
+    }
+    let acceptHeader = request.headers['Accept']
+    if (acceptHeader === 'application/x-gtar') {
+      let archive = archiver('zip')
+      reply(archive)
+      archive.bulk([
+        { expand: true, cwd: 'source', src: ['**'], dest: 'source'}
+      ])
+      archive.finalize()
     }
     reply(data);
 }
@@ -91,6 +139,17 @@ async function headHandler(request, reply) {
       let data = await fs.readFile (filePath)
       setHeaders(reply, filePath, data)
     }
+}
+
+async function writeHandler(request, reply) {
+  console.log(encodeURIComponent(request.params.name))
+  const filePath = path.join(dirName + encodeURIComponent(request.params.name))
+  let stat = await fs.stat(filePath)
+  if (!stat.isFile()) {
+    reply().code(constants.HTTP_403)
+  }
+  await fs.open (filePath, "wx")
+  reply(fs.createWriteStream(filePath));
 }
 
 async function createHandler(request, reply) {
@@ -105,6 +164,10 @@ async function updateHandler(request, reply) {
   const filePath = path.join(dirName + encodeURIComponent(request.params.name))
   await fs.writeFile (filePath, data)
   reply("file updated successfully\n");
+}
+
+async function updateDirHandler(request, reply) {
+  reply().code(constants.HTTP_403)
 }
 
 async function deleteHandler(request, reply) {
