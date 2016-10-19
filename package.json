@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec babel-node -- -- index.js",
+    "start": "nodemon --exec babel-node -- -- server.js",
     "once": "babel-node -- ./",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "run-p start watch:test watch:lint",
@@ -31,11 +31,15 @@
     "babel-register": "^6.16.3",
     "hapi": "^15.1.1",
     "hapi-async-handler": "^1.0.3",
+    "json-socket": "^0.2.0",
     "mime-types": "^2.1.12",
+    "net": "^1.0.2",
     "nodemon": "^1.11.0",
     "npm-run-all": "^3.1.0",
     "path": "^0.12.7",
+    "rimraf": "^2.5.4",
     "songbird": "^1.0.4",
-    "trycatch": "^1.5.21"
+    "trycatch": "^1.5.21",
+    "yargs": "^6.2.0"
   }
 }
