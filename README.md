@@ -36,4 +36,4 @@ Time spent: `8 hours`
 ## Walkthrough
 
 `<Add your Walkthrough Gif here (by updating the image URL)>`
-![Video Walkthrough](...)
+![Video Walkthrough](hapi-crud-walkthru.gif)
